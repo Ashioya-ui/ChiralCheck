@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChiralCheck — Setup Guide</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f7f7f5; --bg3: #f0efe9;
+    --text: #1a1a18; --text2: #5a5a54; --text3: #9a9a90;
+    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+    --blue: #185FA5; --blue-bg: #E6F1FB; --blue-text: #0C447C;
+    --green: #1D9E75; --green-bg: #E1F5EE; --green-text: #085041;
+    --amber: #BA7517; --amber-bg: #FAEEDA; --amber-text: #633806;
+    --red: #A32D2D; --red-bg: #FCEBEB; --red-text: #501313;
+    --mono: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18; --bg2: #242420; --bg3: #2c2c28;
+      --text: #f0efe9; --text2: #a0a098; --text3: #606058;
+      --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.18);
+      --blue: #85B7EB; --blue-bg: #042C53; --blue-text: #B5D4F4;
+      --green: #5DCAA5; --green-bg: #04342C; --green-text: #9FE1CB;
+      --amber: #EF9F27; --amber-bg: #412402; --amber-text: #FAC775;
+      --red: #F09595; --red-bg: #501313; --red-text: #F7C1C1;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg3); color: var(--text); line-height: 1.6; min-height: 100vh; }
+  .shell { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  /* Header */
+  .header { margin-bottom: 2.5rem; }
+  .header h1 { font-size: 22px; font-weight: 500; letter-spacing: -0.3px; }
+  .header p { font-size: 14px; color: var(--text2); margin-top: 4px; }
+  .badge { display: inline-block; background: var(--green-bg); color: var(--green-text);
+    font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 500; }
+
+  /* Progress */
+  .progress { display: flex; gap: 5px; margin-bottom: 2rem; }
+  .pip { height: 3px; flex: 1; border-radius: 2px; background: var(--border2);
+    transition: background 0.25s; cursor: pointer; }
+  .pip.done { background: var(--green); }
+  .pip.active { background: var(--blue); }
+
+  /* Step card */
+  .step-card { background: var(--bg); border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden; }
+  .step-head { padding: 1.25rem 1.5rem; border-bottom: 0.5px solid var(--border); }
+  .step-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .step-n { width: 26px; height: 26px; border-radius: 50%; background: var(--blue-bg);
+    color: var(--blue-text); font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .step-n.done { background: var(--green-bg); color: var(--green-text); }
+  .step-title { font-size: 16px; font-weight: 500; }
+  .step-sub { font-size: 13px; color: var(--text2); }
+  .step-body { padding: 1.25rem 1.5rem; }
+
+  /* Code blocks */
+  .code { background: var(--bg2); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 0.875rem 1rem; margin: 0.875rem 0;
+    font-family: var(--mono); font-size: 13px; line-height: 1.8;
+    color: var(--text); position: relative; white-space: pre-wrap; word-break: break-all; }
+  .copy { position: absolute; top: 8px; right: 8px; background: var(--bg);
+    border: 0.5px solid var(--border2); border-radius: var(--radius);
+    padding: 3px 10px; font-size: 11px; color: var(--text2); cursor: pointer;
+    font-family: inherit; transition: background 0.15s; }
+  .copy:hover { background: var(--bg3); }
+  .cm { color: var(--text3); }
+  .ck { color: var(--blue); }
+
+  /* Notes */
+  .note { border-left: 3px solid var(--blue); background: var(--blue-bg);
+    color: var(--blue-text); padding: 0.75rem 1rem;
+    border-radius: 0 var(--radius) var(--radius) 0; font-size: 13px;
+    line-height: 1.6; margin: 0.875rem 0; }
+  .note.warn { border-color: var(--amber); background: var(--amber-bg); color: var(--amber-text); }
+  .note.ok   { border-color: var(--green); background: var(--green-bg); color: var(--green-text); }
+  .note.err  { border-color: var(--red);   background: var(--red-bg);   color: var(--red-text); }
+
+  /* Checklist */
+  .checklist { display: flex; flex-direction: column; gap: 1px; }
+  .chk { display: flex; gap: 12px; padding: 12px 0;
+    border-bottom: 0.5px solid var(--border); align-items: flex-start; }
+  .chk:last-child { border-bottom: none; }
+  .chk-icon { width: 20px; height: 20px; border-radius: 50%;
+    background: var(--green-bg); color: var(--green-text);
+    font-size: 11px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px; }
+  .chk-label { font-size: 14px; font-weight: 500; }
+  .chk-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* File tree */
+  .tree { background: var(--bg2); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.25rem;
+    font-family: var(--mono); font-size: 13px; line-height: 2.1; }
+  .tree .f  { color: var(--blue); }
+  .tree .c  { color: var(--text3); font-size: 12px; }
+
+  /* Expected output */
+  .expect { display: flex; flex-direction: column; gap: 6px; margin: 0.875rem 0; }
+  .ex-row { display: grid; grid-template-columns: 130px 1fr; gap: 8px;
+    font-size: 13px; align-items: start; }
+  .ex-label { color: var(--text2); }
+  .ex-val { font-family: var(--mono); color: var(--text); }
+  .pass { color: var(--green-text); font-weight: 500; }
+  .fail { color: var(--red-text); font-weight: 500; }
+
+  /* Nav */
+  .nav { display: flex; justify-content: space-between; align-items: center;
+    margin-top: 1rem; }
+  .btn { background: var(--bg); border: 0.5px solid var(--border2);
+    border-radius: var(--radius); padding: 8px 20px; font-size: 14px;
+    color: var(--text); cursor: pointer; font-family: inherit;
+    transition: background 0.15s; }
+  .btn:hover { background: var(--bg2); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .btn.primary:hover { opacity: 0.88; }
+  .counter { font-size: 13px; color: var(--text3); }
+
+  /* Divider */
+  .div { height: 0.5px; background: var(--border); margin: 1rem 0; }
+
+  p { font-size: 14px; color: var(--text2); line-height: 1.7; margin: 0.75rem 0; }
+  strong { color: var(--text); font-weight: 500; }
+  code { font-family: var(--mono); font-size: 12px; background: var(--bg2);
+    padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="header">
+    <h1>ChiralCheck — Setup Guide <span class="badge">v5 final</span></h1>
+    <p>by William Ashioya · SHOAL · From scratch to first audit in 10 steps</p>
+  </div>
+  <div class="progress" id="pips"></div>
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-meta">
+        <div class="step-n" id="snum">1</div>
+        <div>
+          <div class="step-title" id="stitle"></div>
+          <div class="step-sub" id="ssub"></div>
+        </div>
+      </div>
+    </div>
+    <div class="step-body" id="sbody"></div>
+  </div>
+  <div class="nav">
+    <button class="btn" id="prev" onclick="move(-1)">← Back</button>
+    <span class="counter" id="ctr"></span>
+    <button class="btn primary" id="next" onclick="move(1)">Next →</button>
+  </div>
+</div>
+
+<script>
+const STEPS = [
+{
+  title: "What you need",
+  sub: "Two API keys and Python 3.11+. That's it.",
+  body: `
+    <div class="checklist">
+      <div class="chk"><div class="chk-icon">✓</div><div>
+        <div class="chk-label">Anthropic API key</div>
+        <div class="chk-desc">console.anthropic.com → API Keys → Create key. Free $5 credit on signup.</div>
+      </div></div>
+      <div class="chk"><div class="chk-icon">✓</div><div>
+        <div class="chk-label">Voyage AI API key</div>
+        <div class="chk-desc">dash.voyageai.com → API Keys. Free tier: 200M tokens.</div>
+      </div></div>
+      <div class="chk"><div class="chk-icon">✓</div><div>
+        <div class="chk-label">Python 3.11 or newer</div>
+        <div class="chk-desc">Check: <code>python3 --version</code>. If missing: python.org/downloads</div>
+      </div></div>
+      <div class="chk"><div class="chk-icon">✓</div><div>
+        <div class="chk-label">chiralcheck_final.zip</div>
+        <div class="chk-desc">Downloaded from this conversation. Save it somewhere you can find it.</div>
+      </div></div>
+    </div>
+    <div class="note ok" style="margin-top:1rem;">No servers. No accounts beyond the two API keys. No other dependencies to hunt down.</div>
+  `
+},
+{
+  title: "Unzip the package",
+  sub: "Get the files in place",
+  body: `
+    <p>Open your terminal. Navigate to where you saved the zip, then run:</p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>unzip chiralcheck_final.zip
+cd chiralcheck</div>
+    <p>You should now see these files:</p>
+    <div class="tree">
+chiralcheck/<br>
+&nbsp;&nbsp;├─ <span class="f">providers_final.py</span> &nbsp;<span class="c">← Anthropic / OpenAI / Gemini clients</span><br>
+&nbsp;&nbsp;├─ <span class="f">axes_final.py</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="c">← utility, originality, specificity</span><br>
+&nbsp;&nbsp;├─ <span class="f">chiral_final.py</span> &nbsp;&nbsp;<span class="c">← ChiralCheck stability engine</span><br>
+&nbsp;&nbsp;├─ <span class="f">auditor_final.py</span> &nbsp;<span class="c">← orchestrates all 4 axes</span><br>
+&nbsp;&nbsp;├─ <span class="f">cli_final.py</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="c">← the command you'll run</span><br>
+&nbsp;&nbsp;├─ <span class="f">agent_final.py</span> &nbsp;&nbsp;<span class="c">← Dispatch autonomous agent loop</span><br>
+&nbsp;&nbsp;├─ requirements_final.txt<br>
+&nbsp;&nbsp;└─ env_example_final.txt
+    </div>
+    <div class="note warn">The files inside the zip have <code>_final</code> suffixes. Rename them before use — see step 3.</div>
+  `
+},
+{
+  title: "Rename the files",
+  sub: "Strip the _final suffix so the imports work",
+  body: `
+    <p>The tool files import each other by name. Run this from inside the <code>chiralcheck</code> folder:</p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>mv providers_final.py providers.py
+mv axes_final.py axes.py
+mv chiral_final.py chiral.py
+mv auditor_final.py auditor.py
+mv cli_final.py cli.py
+mv agent_final.py agent.py
+mv requirements_final.txt requirements.txt
+mv env_example_final.txt .env.example</div>
+    <div class="note ok">After this, <code>ls</code> should show clean names: providers.py, axes.py, chiral.py, auditor.py, cli.py, agent.py, requirements.txt, .env.example</div>
+  `
+},
+{
+  title: "Create a virtual environment",
+  sub: "Keeps packages isolated — strongly recommended",
+  body: `
+    <div class="note warn">Skip if you're comfortable managing Python environments yourself. Otherwise, do this — it takes 10 seconds and prevents dependency conflicts.</div>
+    <p><strong>Mac / Linux:</strong></p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python3 -m venv .venv
+source .venv/bin/activate</div>
+    <p><strong>Windows:</strong></p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python3 -m venv .venv
+.venv\\Scripts\\activate</div>
+    <p>You'll see <code>(.venv)</code> at the start of your prompt. That means it's active. Every command from here runs inside it.</p>
+  `
+},
+{
+  title: "Install packages",
+  sub: "One command, about 30 seconds",
+  body: `
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>pip install -r requirements.txt</div>
+    <p>This installs five packages:</p>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin:0.75rem 0 1rem;">
+      ${['anthropic','voyageai','openai','google-genai','python-dotenv'].map(p =>
+        `<span style="background:var(--blue-bg);color:var(--blue-text);font-size:12px;padding:2px 9px;border-radius:10px;font-family:var(--mono);">${p}</span>`
+      ).join('')}
+    </div>
+    <div class="note">You only need the <strong>Anthropic and Voyage keys</strong> to use the tool. The OpenAI and Gemini packages install silently and stay unused unless you add those keys.</div>
+    <div class="note warn">If <code>google-genai</code> fails to install, run <code>pip install --upgrade pip</code> first and retry. This is the new SDK — not <code>google-generativeai</code>.</div>
+  `
+},
+{
+  title: "Add your API keys",
+  sub: "Copy the example file and fill in two values",
+  body: `
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>cp .env.example .env</div>
+    <p>Open <code>.env</code> in any text editor. It looks like this:</p>
+    <div class="code"><span class="cm"># Required</span>
+ANTHROPIC_API_KEY=<span class="ck">sk-ant-...</span>
+VOYAGE_API_KEY=<span class="ck">pa-...</span>
+
+<span class="cm"># Optional alternatives</span>
+<span class="cm"># OPENAI_API_KEY=sk-proj-...</span>
+<span class="cm"># GEMINI_API_KEY=AIza...</span></div>
+    <p>Replace <code>sk-ant-...</code> and <code>pa-...</code> with your actual keys. Save the file.</p>
+    <div class="note err">Never commit <code>.env</code> to git. It contains secrets. The <code>.gitignore</code> already excludes it.</div>
+  `
+},
+{
+  title: "Check providers",
+  sub: "Confirm the tool can see your keys — 2 seconds",
+  body: `
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python cli.py --providers</div>
+    <p>Expected output:</p>
+    <div class="code">  Configured providers:
+  <span style="color:var(--green);">✓</span>  anthropic
+  <span style="color:var(--text3);">✗</span>  openai
+  <span style="color:var(--text3);">✗</span>  openai
+  <span style="color:var(--green);">✓</span>  voyage</div>
+    <div class="note ok">Anthropic ✓ and Voyage ✓ is all you need. The ✗ entries are unused alternatives.</div>
+    <div class="note warn">If both show ✗, your <code>.env</code> file isn't being found. Make sure you're running the command from inside the <code>chiralcheck</code> folder.</div>
+  `
+},
+{
+  title: "Preflight — ping the APIs",
+  sub: "Makes one cheap call to confirm the keys actually work — ~5 seconds",
+  body: `
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python cli.py --preflight</div>
+    <p>Expected output:</p>
+    <div class="code">  Preflight  (anthropic/claude-sonnet-4  +  voyage/voyage-3-large)...
+  <span style="color:var(--green);">✓</span> anthropic + voyage both responding
+
+  Ready.  Run --quicktest next.</div>
+    <div class="note warn">If you see an auth error, copy-paste the key again from the provider dashboard — a single wrong character breaks it.</div>
+    <div class="note err">If you see a timeout, check your internet connection. The tool calls external APIs.</div>
+  `
+},
+{
+  title: "Quick test",
+  sub: "Scores Newton's F=ma — a known-stable idea — verifies all 4 axes work end-to-end",
+  body: `
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python cli.py --quicktest</div>
+    <p>Takes about 90 seconds. Watch all 4 axes complete. Expected results:</p>
+    <div class="expect">
+      <div class="ex-row"><span class="ex-label">Stability</span><span class="ex-val">≥ 60/100 · <span class="pass">STABLE ATTRACTOR</span></span></div>
+      <div class="ex-row"><span class="ex-label">Utility</span><span class="ex-val">≥ 50/100</span></div>
+      <div class="ex-row"><span class="ex-label">Quick test</span><span class="ex-val"><span class="pass">PASS</span></span></div>
+    </div>
+    <div class="note ok">PASS means the full pipeline is working: LLM calls, embedding, covariance geometry, composite scoring. You're ready for real work.</div>
+    <div class="note warn">If scores are low or the test FAILs, run <code>python cli.py --calibrate</code> to print raw log-det values and check whether thresholds need adjusting for your provider combination.</div>
+  `
+},
+{
+  title: "Score your first idea",
+  sub: "Real work — your paper, thesis, or idea text",
+  body: `
+    <p><strong>Score a file:</strong></p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python cli.py --input your_paper.txt --plot</div>
+    <p><strong>Score text directly:</strong></p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python cli.py --text "Your idea or thesis here..." --plot</div>
+    <p><strong>Machine-readable JSON output:</strong></p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python cli.py --input your_paper.txt --json</div>
+    <p><strong>Stability check only (ChiralCheck):</strong></p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python cli.py --chiral "Your thesis statement..."</div>
+    <div class="div"></div>
+    <p><strong>Dispatch agent mode</strong> — Claude audits autonomously:</p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python cli.py --agent "audit my naturalism prior paper"</div>
+    <p style="font-size:13px;color:var(--text2);">The agent finds the file, runs ChiralCheck, reads the JSON, and writes you a structured report with the open problems list — no keyboard interaction needed. This is the Anthropic Dispatch / Computer Use pattern.</p>
+    <div class="div"></div>
+    <p><strong>Compare across providers</strong> (if you have multiple keys):</p>
+    <div class="code"><button class="copy" onclick="cp(this)">copy</button>python cli.py --input paper.txt --compare</div>
+    <div class="note ok">The most important output is the <strong>Specificity → open problems</strong> list. Those are the UNKNOWN subtasks — the exact open problems your idea still needs solved, named explicitly.</div>
+  `
+}
+];
+
+let cur = 0;
+
+function render() {
+  const s = STEPS[cur];
+  const total = STEPS.length;
+
+  // Pips
+  document.getElementById('pips').innerHTML = STEPS.map((_,i) =>
+    `<div class="pip ${i<cur?'done':i===cur?'active':''}" onclick="jump(${i})"></div>`
+  ).join('');
+
+  // Step number
+  const numEl = document.getElementById('snum');
+  numEl.textContent = cur + 1;
+  numEl.className = 'step-n' + (cur > 0 ? ' done' : '');
+
+  document.getElementById('stitle').textContent = s.title;
+  document.getElementById('ssub').textContent   = s.sub;
+  document.getElementById('sbody').innerHTML    = s.body;
+  document.getElementById('ctr').textContent    = `${cur+1} of ${total}`;
+
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  prev.disabled = cur === 0;
+  if (cur === total - 1) {
+    next.textContent = 'Done ✓';
+    next.disabled = true;
+  } else {
+    next.textContent = 'Next →';
+    next.disabled = false;
+  }
+}
+
+function move(d) {
+  cur = Math.max(0, Math.min(STEPS.length-1, cur+d));
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function jump(i) {
+  cur = i; render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function cp(btn) {
+  const block = btn.closest('.code');
+  const text = block.innerText.replace('copy','').replace('copied!','').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
